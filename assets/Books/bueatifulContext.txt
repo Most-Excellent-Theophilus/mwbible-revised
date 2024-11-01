@@ -1,0 +1,122 @@
+import React, { createContext, useState, ReactNode, useContext } from 'react';
+
+// Define the shape of the user's address
+type Address = {
+  street: string;
+  city: string;
+  zip: string;
+};
+
+// Define the shape of the user data, including nested objects
+type User = {
+  name: string;
+  email: string;
+  preferences: {
+    theme: 'light' | 'dark';
+    notificationsEnabled: boolean;
+  };
+  address: Address;
+};
+
+// Define the shape of the context state and update functions
+interface UserContextType {
+  user: User | null;
+  updateUser: (userData: User) => void;
+  updateUserPreferences: (preferences: User['preferences']) => void;
+  updateUserAddress: (address: Address) => void;
+}
+
+// Create the context
+const UserContext = createContext<UserContextType | undefined>(undefined);
+
+// Create a provider component
+export const UserProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+
+  const updateUser = (userData: User) => {
+    setUser(userData);
+  };
+
+  const updateUserPreferences = (preferences: User['preferences']) => {
+    setUser((prevUser) => prevUser ? { ...prevUser, preferences } : prevUser);
+  };
+
+  const updateUserAddress = (address: Address) => {
+    setUser((prevUser) => prevUser ? { ...prevUser, address } : prevUser);
+  };
+
+  return (
+    <UserContext.Provider value={{ user, updateUser, updateUserPreferences, updateUserAddress }}>
+      {children}
+    </UserContext.Provider>
+  );
+};
+
+// Custom hook to use the UserContext
+export const useUserContext = () => {
+  const context = useContext(UserContext);
+  if (context === undefined) {
+    throw new Error('useUserContext must be used within a UserProvider');
+  }
+  return context;
+};
+
+import React from 'react';
+import { UserProvider } from './UserContext';
+import ProfileScreen from './screens/ProfileScreen';
+
+const App = () => {
+  return (
+    <UserProvider>
+      <ProfileScreen />
+    </UserProvider>
+  );
+};
+
+export default App;
+
+import React from 'react';
+import { View, Text, Button } from 'react-native';
+import { useUserContext } from '../UserContext';
+
+const ProfileScreen = () => {
+  const { user, updateUserPreferences, updateUserAddress } = useUserContext();
+
+  return (
+    <View>
+      {user ? (
+        <>
+          <Text>Welcome, {user.name}!</Text>
+          <Text>Email: {user.email}</Text>
+          <Text>Theme: {user.preferences.theme}</Text>
+          <Text>Notifications: {user.preferences.notificationsEnabled ? 'On' : 'Off'}</Text>
+          <Text>Address: {user.address.street}, {user.address.city}, {user.address.zip}</Text>
+          
+          <Button
+            title="Toggle Theme"
+            onPress={() =>
+              updateUserPreferences({
+                ...user.preferences,
+                theme: user.preferences.theme === 'light' ? 'dark' : 'light',
+              })
+            }
+          />
+          <Button
+            title="Update Address"
+            onPress={() =>
+              updateUserAddress({
+                street: '123 New St',
+                city: 'New City',
+                zip: '00000',
+              })
+            }
+          />
+        </>
+      ) : (
+        <Text>No user data available.</Text>
+      )}
+    </View>
+  );
+};
+
+export default ProfileScreen;
