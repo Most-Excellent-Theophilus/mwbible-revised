@@ -1,8 +1,6 @@
 import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { useUserContext } from "@/components/preference/UserContext";
 import { ThemedText } from "@/components/ThemedText";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useRef, useState } from "react";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
@@ -19,6 +17,8 @@ import SkeletonBox from "@/components/loadingSkeleton";
 
 import Animated, { useSharedValue, withTiming } from "react-native-reanimated";
 import SlideInView from "@/components/SlideInView";
+
+import { useGlobalContext } from "@/context/GlobalContext";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 type BibleType = {
@@ -42,17 +42,13 @@ type BibleType = {
   ];
 };
 const Home = () => {
+  const { language, setLanguage } = useGlobalContext();
   const colorScheme = useColorScheme();
-
-  const { user, UpdateUserContext, updateUserPreferences } = useUserContext();
-  const [userLanguage, setUserLanguage] = useState<string | null>(
-    user?.language.options || "Ch"
-  );
 
   const [expandSelectionModal, setExpandSelectionModal] = useState(false);
   const [bible, getBible] = useState<BibleType | undefined>(undefined);
-  const [userBook, setUserBook] = useState<string>(user?.book || "1");
-  const [userChapter, setUserChapter] = useState<string>(user?.chapter || "1");
+  const [userBook, setUserBook] = useState<string>("1");
+  const [userChapter, setUserChapter] = useState<string>("1");
   const themeColors = colorScheme === "dark" ? Colors.dark : Colors.light;
   const [isChapterSelection, setIsChapterSelection] = useState(false);
 
@@ -71,33 +67,16 @@ const Home = () => {
 
   useEffect(() => {
     storeData();
-  }, [userLanguage]);
+
+  }, [language]);
+
+  
+ 
 
   const storeData = async () => {
     try {
-      const ifLanguage = await AsyncStorage.getItem("language");
-      if (ifLanguage == null) {
-        setUserLanguage("Ch");
-        await AsyncStorage.setItem("language", "Ch");
-      } else {
-        setUserLanguage(ifLanguage);
-      }
-      const ifBook = await AsyncStorage.getItem("book");
-      if (ifBook == null) {
-        setUserBook("1");
-        await AsyncStorage.setItem("book", "1");
-      } else {
-        setUserBook(ifBook);
-      }
-      const ifChapter = await AsyncStorage.getItem("chapter");
-      if (ifChapter == null) {
-        setUserChapter("1");
-        await AsyncStorage.setItem("chapter", "1");
-      } else {
-        setUserChapter(ifChapter);
-      }
-
-      switch (userLanguage) {
+   
+      switch (language) {
         case "Ch":
           await import("../assets/Books/Chichewa.json").then((bibleData) =>
             getBible(bibleData.default as BibleType)
@@ -133,6 +112,8 @@ const Home = () => {
 
   // };
   const handleForward = () => {
+  
+
     scrollToTop();
     if (
       Number(userChapter) <
@@ -159,16 +140,20 @@ const Home = () => {
 
         setUserBook(String(1));
       }
+    
     }
     if (
       !bible?.BIBLEBOOK.find((b) => b.bnumber == String(userBook))?.CHAPTERS
         .length
     ) {
       setUserBook(String(Number(userBook) + 1));
+   
     }
   };
+
   const handleBackward = () => {
     scrollToTop();
+   
 
     if (Number(userChapter) > 1) {
       setUserChapter(String(Number(userChapter) - 1)); // Go to the previous chapter
@@ -182,10 +167,12 @@ const Home = () => {
 
         setUserChapter(String(myBook));
         setUserBook(String(Number(userBook) - 1));
+    
       } else {
         setUserChapter(String(22));
 
         setUserBook(String(66));
+       
       }
     }
     if (
@@ -297,7 +284,11 @@ const Home = () => {
                 ...styles.buttonControls,
                 borderColor: themeColors.tint,
               }}
-              onPress={() => handleSelectionModalExpansion()}
+              onPress={() => {
+                handleSelectionModalExpansion();
+
+                setIsChapterSelection(false);
+              }}
             >
               <ThemedText type="subtitle" style={{ color: themeColors.icon }}>
                 {
@@ -314,7 +305,7 @@ const Home = () => {
           <TouchableOpacity
             style={{ ...styles.buttonControls }}
             onPress={() => {
-              setIsChapterSelection(false)
+              setIsChapterSelection(false);
               handleForward();
             }}
           >
@@ -514,15 +505,17 @@ const Home = () => {
                   borderBottomWidth: 1,
                   borderBottomColor: themeColors.background2,
                 }}
-                onPress={() => {
+                onPress={ () => {
+                  handleSelectionModalExpansion();
                   setUserBook(books.bnumber);
+               
                   setUserChapter("1");
+         
+
+                  scrollToTop();
                   handleChapterSelection(
                     books.CHAPTERS.length ? books.CHAPTERS.length : "1"
                   );
-
-                  handleSelectionModalExpansion();
-                  scrollToTop();
 
                   // setIsChapterSelection(true)
                 }}
