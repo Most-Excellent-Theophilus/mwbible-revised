@@ -1,13 +1,13 @@
 import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { useUserContext } from "@/components/preference/UserContext";
 import { ThemedText } from "@/components/ThemedText";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useRef, useState } from "react";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import {
+  Button,
   Dimensions,
+  Image,
   PanResponder,
   ScrollView,
   StyleSheet,
@@ -20,6 +20,9 @@ import SkeletonBox from "@/components/loadingSkeleton";
 import Animated, { useSharedValue, withTiming } from "react-native-reanimated";
 import SlideInView from "@/components/SlideInView";
 
+import { useGlobalContext } from "@/context/GlobalContext";
+import CustomToast from "@/components/preference/CustomToast";
+
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 type BibleType = {
   biblename: string;
@@ -27,37 +30,48 @@ type BibleType = {
     {
       bnumber: string;
       bname: string;
-      CHAPTERS: [
-        {
-          cnumber: string;
-          VERS: [
+      CHAPTERS:
+        | [
             {
-              vnumber: string;
-              text: string;
+              cnumber: string;
+              VERS: [
+                {
+                  vnumber: string;
+                  text: string;
+                }
+              ];
             }
-          ];
-        }
-      ];
+          ]
+        | any
+        | null
+        | undefined;
     }
   ];
 };
 const Home = () => {
+  const { language, setLanguage } = useGlobalContext();
   const colorScheme = useColorScheme();
-
-  const { user, UpdateUserContext, updateUserPreferences } = useUserContext();
-  const [userLanguage, setUserLanguage] = useState<string | null>(
-    user?.language.options || "Ch"
-  );
+  const [message, setMessage] = useState("");
 
   const [expandSelectionModal, setExpandSelectionModal] = useState(false);
   const [bible, getBible] = useState<BibleType | undefined>(undefined);
-  const [userBook, setUserBook] = useState<string>(user?.book || "1");
-  const [userChapter, setUserChapter] = useState<string>(user?.chapter || "1");
+  const [userBook, setUserBook] = useState<string>("1");
+  const [userChapter, setUserChapter] = useState<string>("1");
   const themeColors = colorScheme === "dark" ? Colors.dark : Colors.light;
   const [isChapterSelection, setIsChapterSelection] = useState(false);
 
   const [chaptersContent, setChaptersContent] = useState<any | {} | []>([]);
   const scrollViewRef = useRef<ScrollView>(null);
+  const [switching, setSwitching] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+
+  const showToast = () => {
+    setToastVisible(true);
+  };
+
+  const hideToast = () => {
+    setToastVisible(false);
+  };
 
   const scrollToTop = () => {
     scrollViewRef.current!.scrollTo({ y: 0, animated: true }); // Use non-null assertion
@@ -71,33 +85,12 @@ const Home = () => {
 
   useEffect(() => {
     storeData();
-  }, [userLanguage]);
+  }, [language]);
 
   const storeData = async () => {
     try {
-      const ifLanguage = await AsyncStorage.getItem("language");
-      if (ifLanguage == null) {
-        setUserLanguage("Ch");
-        await AsyncStorage.setItem("language", "Ch");
-      } else {
-        setUserLanguage(ifLanguage);
-      }
-      const ifBook = await AsyncStorage.getItem("book");
-      if (ifBook == null) {
-        setUserBook("1");
-        await AsyncStorage.setItem("book", "1");
-      } else {
-        setUserBook(ifBook);
-      }
-      const ifChapter = await AsyncStorage.getItem("chapter");
-      if (ifChapter == null) {
-        setUserChapter("1");
-        await AsyncStorage.setItem("chapter", "1");
-      } else {
-        setUserChapter(ifChapter);
-      }
-
-      switch (userLanguage) {
+      setSwitching(true);
+      switch (language) {
         case "Ch":
           await import("../assets/Books/Chichewa.json").then((bibleData) =>
             getBible(bibleData.default as BibleType)
@@ -109,7 +102,10 @@ const Home = () => {
             getBible(bibleData.default as BibleType)
           );
           break;
-        case "Tu":
+        case "Se":
+          await import("../assets/Books/SenaMalawiBible.json").then(
+            (bibleData) => getBible(bibleData.default as BibleType)
+          );
           break;
         case "Yao":
           break;
@@ -123,15 +119,13 @@ const Home = () => {
       }
     } catch (error) {
       alert("some thing went wrong");
+    } finally {
+      setSwitching(false);
+      setMessage(`${language=="Ch"? " Chichewa ": language=="En"?" English ":" Sena "}Bible Loaded`);
+      showToast();
     }
   };
 
-  // const chooseChapter = () => {
-  //   const data = bible?.BIBLEBOOK.find((b) => b.bnumber == String(userBook) );
-  //   const selectedChapter = data?.CHAPTERS.find((c) => (c.cnumber == String(userChapter) ));
-  //  setChapterData(selectedChapter?.VERS)
-
-  // };
   const handleForward = () => {
     scrollToTop();
     if (
@@ -167,6 +161,7 @@ const Home = () => {
       setUserBook(String(Number(userBook) + 1));
     }
   };
+
   const handleBackward = () => {
     scrollToTop();
 
@@ -241,12 +236,23 @@ const Home = () => {
     },
   });
 
-  const handleChapterSelection = (numberOfBooks: string | number) => {
-    if (numberOfBooks != "1") {
+  const handleChapterSelection = async ({
+    numberOfChapters,
+    bookNumber,
+  }: {
+    numberOfChapters: string | number;
+    bookNumber: string;
+  }) => {
+    if (numberOfChapters != "1") {
       setIsChapterSelection(true);
-      const chapterArray = createArray(numberOfBooks);
+      const chapterArray = createArray(numberOfChapters);
       setChaptersContent(chapterArray);
     }
+    handleSelectionModalExpansion();
+
+    scrollToTop();
+    setUserBook(bookNumber);
+    setUserChapter("1");
   };
 
   function createArray(size: any) {
@@ -297,7 +303,11 @@ const Home = () => {
                 ...styles.buttonControls,
                 borderColor: themeColors.tint,
               }}
-              onPress={() => handleSelectionModalExpansion()}
+              onPress={() => {
+                handleSelectionModalExpansion();
+
+                setIsChapterSelection(false);
+              }}
             >
               <ThemedText type="subtitle" style={{ color: themeColors.icon }}>
                 {
@@ -314,7 +324,7 @@ const Home = () => {
           <TouchableOpacity
             style={{ ...styles.buttonControls }}
             onPress={() => {
-              setIsChapterSelection(false)
+              setIsChapterSelection(false);
               handleForward();
             }}
           >
@@ -325,13 +335,30 @@ const Home = () => {
       <ScrollView ref={scrollViewRef}>
         <ParallaxScrollView
           headerBackgroundColor={{
-            light: themeColors.background,
+            light: themeColors.background2,
             dark: themeColors.background,
           }}
           noPadding={true}
           headerImage={
             <>
-              <TabBarIcon size={310} name="book" style={styles.headerImage} />
+              <Image
+                source={require("../assets/images/favicon.png")}
+                style={styles.headerImage}
+              />
+
+              {switching && (
+                <Animated.View style={{ position: "absolute" }}>
+                  <ThemedView
+                    style={{ padding: 5, borderRadius: 10, margin: 10 }}
+                  >
+                    <ThemedText style={{ paddingBottom: 5 }}>
+                      Loading bible...
+                    </ThemedText>
+
+                    <SkeletonBox height={4} width={120} />
+                  </ThemedView>
+                </Animated.View>
+              )}
 
               {bible ? (
                 <ThemedView style={{ ...styles.titleContainer, padding: 10 }}>
@@ -377,11 +404,16 @@ const Home = () => {
                         height: 50,
                         alignItems: "center",
                         justifyContent: "center",
+
                         borderRadius: 9,
                         backgroundColor: themeColors.background2,
                       }}
                     >
-                      <ThemedText>{number}</ThemedText>
+                      <ThemedText
+                        style={{ fontWeight: "bold", color: themeColors.tint }}
+                      >
+                        {number}
+                      </ThemedText>
                     </TouchableOpacity>
                   ))}
               </ThemedView>
@@ -390,9 +422,9 @@ const Home = () => {
             {bible?.BIBLEBOOK.find((b) => b.bnumber == String(userBook))
               ?.CHAPTERS.length
               ? bible?.BIBLEBOOK.find((b) => b.bnumber == String(userBook))
-                  ?.CHAPTERS.find((c) => c.cnumber == String(userChapter))
-                  ?.VERS.map((item) => (
-                    <ThemedView
+                  ?.CHAPTERS.find((c: any) => c.cnumber == String(userChapter))
+                  ?.VERS.map((item: any) => (
+                    <TouchableOpacity
                       style={{ flexDirection: "row" }}
                       key={item.vnumber}
                     >
@@ -403,22 +435,27 @@ const Home = () => {
 
                           letterSpacing: 0.5,
                           opacity: 0.7,
+
+                          fontSize: 18,
                         }}
                       >
                         <ThemedText
-                          style={{ color: themeColors.tabIconDefault }}
+                          style={{
+                            color: themeColors.tabIconDefault,
+                            fontWeight: "bold",
+                          }}
                         >
                           {item.vnumber}.{" "}
                         </ThemedText>
                         {item.text}
                       </ThemedText>
-                    </ThemedView>
+                    </TouchableOpacity>
                   ))
               : bible?.BIBLEBOOK.find((b) => b.bnumber == String(userBook))
                   ?.CHAPTERS.cnumber == "1"
               ? bible?.BIBLEBOOK.find(
                   (b) => b.bnumber == String(userBook)
-                )?.CHAPTERS.VERS.map((item) => (
+                )?.CHAPTERS.VERS.map((item: any) => (
                   <ThemedView
                     style={{ flexDirection: "row" }}
                     key={item.vnumber}
@@ -514,17 +551,16 @@ const Home = () => {
                   borderBottomWidth: 1,
                   borderBottomColor: themeColors.background2,
                 }}
-                onPress={() => {
-                  setUserBook(books.bnumber);
-                  setUserChapter("1");
-                  handleChapterSelection(
-                    books.CHAPTERS.length ? books.CHAPTERS.length : "1"
-                  );
+                onPress={ async () => {
+                  setMessage(`Book: ${books.bname}`);
+                  showToast();
 
-                  handleSelectionModalExpansion();
-                  scrollToTop();
-
-                  // setIsChapterSelection(true)
+                await  handleChapterSelection({
+                    numberOfChapters: books.CHAPTERS.length
+                      ? books.CHAPTERS.length
+                      : "1",
+                    bookNumber: books.bnumber,
+                  });
                 }}
               >
                 <ThemedText
@@ -542,15 +578,21 @@ const Home = () => {
           </ThemedView>
         </ParallaxScrollView>
       </SlideInView>
+      {/* <Button title="Show Toast" onPress={showToast} /> */}
+      <CustomToast
+        message={message}
+        visible={toastVisible}
+        onClose={hideToast}
+      />
     </>
   );
 };
 
 const styles = StyleSheet.create({
   headerImage: {
-    color: "#808080",
-    bottom: -90,
-    left: -35,
+    bottom: -70,
+    right: -70,
+    width: 310,
     position: "absolute",
   },
   titleContainer: {

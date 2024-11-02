@@ -5,7 +5,7 @@ import React, { createContext, useState, ReactNode, useContext } from 'react';
 type User = {
   language : {
     options: 'Ch' | 'En'| 'Tu'|'Yao';
-    isStrictMode: boolean;
+    isStrictMode?: boolean;
   };
   version?: string;
   revision?: string;
