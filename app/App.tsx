@@ -14,7 +14,7 @@ import { Colors } from "@/constants/Colors";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 import { ThemedText } from "@/components/ThemedText";
-import { StyleSheet, Pressable, TouchableOpacity } from "react-native";
+import { StyleSheet, Pressable, TouchableOpacity, Image } from "react-native";
 import { Link } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { ThemedView } from "@/components/ThemedView";
@@ -50,6 +50,18 @@ export default function RootLayout() {
     return null;
   }
 
+  const LeftHeaderArrow = () => (
+    <Link href="/" asChild>
+      <TouchableOpacity
+        style={{
+          ...styles.LeftHeaderArrow,
+        }}
+      >
+        <TabBarIcon name="chevron-back" size={30} color={themeColors.icon} />
+      </TouchableOpacity>
+    </Link>
+  );
+
   const themeColors = colorScheme === "dark" ? Colors.dark : Colors.light;
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -79,16 +91,16 @@ export default function RootLayout() {
           drawerContent={() => (
             <ParallaxScrollView
               headerBackgroundColor={{
-                light: themeColors.icon,
-                dark: themeColors.text,
+                light: themeColors.background2,
+                dark: themeColors.background2,
               }}
               headerImage={
                 <>
-                  <Ionicons
-                    size={310}
-                    name="code-slash"
+                  <Image
+                    source={require("../assets/images/splash.png")}
                     style={styles.headerImage}
                   />
+
                   <ThemedView style={styles.titleContainer}>
                     <ThemedText type="title">Malawian Bibles</ThemedText>
                   </ThemedView>
@@ -104,7 +116,7 @@ export default function RootLayout() {
                 >
                   <TabBarIcon name="book" size={20} color={themeColors.icon} />
                   <ThemedText
-                    style={{ ...styles.drawerLink, color: themeColors.text }}
+                    style={{ ...styles.drawerLink, color: themeColors.icon }}
                   >
                     Bible
                   </ThemedText>
@@ -119,7 +131,7 @@ export default function RootLayout() {
                 >
                   <TabBarIcon name="heart" size={20} color={themeColors.icon} />
                   <ThemedText
-                    style={{ ...styles.drawerLink, color: themeColors.text }}
+                    style={{ ...styles.drawerLink, color: themeColors.icon }}
                   >
                     Favorites
                   </ThemedText>
@@ -138,7 +150,7 @@ export default function RootLayout() {
                     color={themeColors.icon}
                   />
                   <ThemedText
-                    style={{ ...styles.drawerLink, color: themeColors.text }}
+                    style={{ ...styles.drawerLink, color: themeColors.icon }}
                   >
                     Reading Plans
                   </ThemedText>
@@ -157,7 +169,7 @@ export default function RootLayout() {
                     color={themeColors.icon}
                   />
                   <ThemedText
-                    style={{ ...styles.drawerLink, color: themeColors.text }}
+                    style={{ ...styles.drawerLink, color: themeColors.icon }}
                   >
                     Notes
                   </ThemedText>
@@ -172,7 +184,7 @@ export default function RootLayout() {
                 >
                   <TabBarIcon name="today" size={20} color={themeColors.icon} />
                   <ThemedText
-                    style={{ ...styles.drawerLink, color: themeColors.text }}
+                    style={{ ...styles.drawerLink, color: themeColors.icon }}
                   >
                     Todays Verse
                   </ThemedText>
@@ -187,7 +199,7 @@ export default function RootLayout() {
                 >
                   <TabBarIcon name="gift" size={20} color={themeColors.icon} />
                   <ThemedText
-                    style={{ ...styles.drawerLink, color: themeColors.text }}
+                    style={{ ...styles.drawerLink, color: themeColors.icon }}
                   >
                     Support\Donate
                   </ThemedText>
@@ -206,9 +218,28 @@ export default function RootLayout() {
                     color={themeColors.icon}
                   />
                   <ThemedText
-                    style={{ ...styles.drawerLink, color: themeColors.text }}
+                    style={{ ...styles.drawerLink, color: themeColors.icon }}
                   >
                     Share App
+                  </ThemedText>
+                </Pressable>
+              </Link>
+              <Link href="./Developer" asChild>
+                <Pressable
+                  style={{
+                    ...styles.drawerPressable,
+                    borderBottomColor: themeColors.icon,
+                  }}
+                >
+                  <TabBarIcon
+                    name="code-slash"
+                    size={20}
+                    color={themeColors.icon}
+                  />
+                  <ThemedText
+                    style={{ ...styles.drawerLink, color: themeColors.icon }}
+                  >
+                    About Developer
                   </ThemedText>
                 </Pressable>
               </Link>
@@ -225,7 +256,7 @@ export default function RootLayout() {
                     color={themeColors.icon}
                   />
                   <ThemedText
-                    style={{ ...styles.drawerLink, color: themeColors.text }}
+                    style={{ ...styles.drawerLink, color: themeColors.icon }}
                   >
                     Settings
                   </ThemedText>
@@ -240,51 +271,70 @@ export default function RootLayout() {
               // headerTitle: ()=> null,
               headerTitle: () => (
                 <>
-              {languageSelection &&  <ThemedView
-                    style={{
-                      position: "absolute",
-                      bottom: -90,
-                      zIndex: 1,
-                      backgroundColor: themeColors.background2,
-                      padding: 10,
-                      borderRadius: 4,
-                    }}
-                  >
-                    <TouchableOpacity
-                      style={{ paddingRight: 40, paddingVertical: 7 }}
-                      onPress={() => {
-                        setLanguageFromSelection("Ch") 
+                  {languageSelection && (
+                    <ThemedView
+                      style={{
+                        position: "absolute",
+                        bottom: -130,
+                        zIndex: 1,
+                        backgroundColor: themeColors.tabIconDefault,
+                        padding: 10,
+                        borderRadius: 4,
                       }}
                     >
-                      <ThemedText
-                        style={{
-                          color: themeColors.tint,
-                          borderBottomWidth: 0.5,
-                          borderBottomColor: themeColors.icon,
+                      <TouchableOpacity
+                        style={{ paddingRight: 40, paddingVertical: 7 }}
+                        onPress={() => {
+                          setLanguageFromSelection("Ch");
                         }}
                       >
-                        {" "}
-                        Chichewa
-                      </ThemedText>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={{ paddingRight: 40, paddingVertical: 7 }}
-                      onPress={() => {
-                        setLanguageFromSelection("En") 
-                      }}
-                    >
-                      <ThemedText
-                        style={{
-                          color: themeColors.tint,
-                          borderBottomWidth: 0.5,
-                          borderBottomColor: themeColors.icon,
+                        <ThemedText
+                          style={{
+                            color: themeColors.background,
+                            borderBottomWidth: 0.5,
+                            borderBottomColor: themeColors.background2,
+                          }}
+                        >
+                          {" "}
+                          Chichewa
+                        </ThemedText>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{ paddingRight: 40, paddingVertical: 7 }}
+                        onPress={() => {
+                          setLanguageFromSelection("En");
                         }}
                       >
-                        {" "}
-                        English
-                      </ThemedText>
-                    </TouchableOpacity>
-                  </ThemedView> }   
+                        <ThemedText
+                          style={{
+                            color: themeColors.background,
+                            borderBottomWidth: 0.5,
+                            borderBottomColor: themeColors.background2,
+                          }}
+                        >
+                          {" "}
+                          English
+                        </ThemedText>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{ paddingRight: 40, paddingVertical: 7 }}
+                        onPress={() => {
+                          setLanguageFromSelection("Se");
+                        }}
+                      >
+                        <ThemedText
+                          style={{
+                            color: themeColors.background,
+                            borderBottomWidth: 0.5,
+                            borderBottomColor: themeColors.background2,
+                          }}
+                        >
+                          {" "}
+                          Sena
+                        </ThemedText>
+                      </TouchableOpacity>
+                    </ThemedView>
+                  )}
                   <ThemedView
                     style={{ flexDirection: "row", alignItems: "center" }}
                   >
@@ -300,7 +350,11 @@ export default function RootLayout() {
                         type="subtitle"
                         style={{ color: themeColors.tabIconDefault }}
                       >
-                        {language == "Ch" ? "Chichewa" : "English"}
+                        {language == "Ch"
+                          ? "Chichewa"
+                          : language == "En"
+                          ? "English"
+                          : "Sena"}
                       </ThemedText>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -349,42 +403,56 @@ export default function RootLayout() {
             name="ReadingPlans"
             options={{
               title: "Reading Plans",
+              headerLeft: () => <LeftHeaderArrow />
             }}
           />
           <Drawer.Screen
             name="Favorites"
             options={{
               title: "Favorites",
+              headerLeft: () => <LeftHeaderArrow />
             }}
           />
           <Drawer.Screen
             name="TodaysVerse"
             options={{
               title: "Todays Verse",
+              headerLeft: () => <LeftHeaderArrow />
             }}
           />
           <Drawer.Screen
             name="Notes"
             options={{
               title: "Notes",
+              headerLeft: () => <LeftHeaderArrow />
             }}
           />
           <Drawer.Screen
             name="Donate"
             options={{
               title: "Donate",
+              headerLeft: () => <LeftHeaderArrow />
             }}
           />
           <Drawer.Screen
             name="ShareApp"
             options={{
               title: "Share App",
+              headerLeft: () => <LeftHeaderArrow />
+            }}
+          />
+           <Drawer.Screen
+            name="Developer"
+            options={{
+              title: "About Developer",
+              headerLeft: () => <LeftHeaderArrow />
             }}
           />
           <Drawer.Screen
             name="Settings"
             options={{
               title: "Settings",
+              headerLeft: () => <LeftHeaderArrow />
             }}
           />
         </Drawer>
@@ -415,5 +483,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderBottomWidth: 0.5,
     paddingBottom: 12,
+  },
+  LeftHeaderArrow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
   },
 });

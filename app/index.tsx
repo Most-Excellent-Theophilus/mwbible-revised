@@ -6,6 +6,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import {
   Dimensions,
+  Image,
   PanResponder,
   ScrollView,
   StyleSheet,
@@ -37,7 +38,7 @@ type BibleType = {
             }
           ];
         }
-      ];
+      ] | any | null | undefined,
     }
   ];
 };
@@ -67,15 +68,10 @@ const Home = () => {
 
   useEffect(() => {
     storeData();
-
   }, [language]);
-
-  
- 
 
   const storeData = async () => {
     try {
-   
       switch (language) {
         case "Ch":
           await import("../assets/Books/Chichewa.json").then((bibleData) =>
@@ -88,7 +84,10 @@ const Home = () => {
             getBible(bibleData.default as BibleType)
           );
           break;
-        case "Tu":
+        case "Se":
+          await import("../assets/Books/SenaMalawiBible.json").then(
+            (bibleData) => getBible(bibleData.default as BibleType)
+          );
           break;
         case "Yao":
           break;
@@ -105,15 +104,7 @@ const Home = () => {
     }
   };
 
-  // const chooseChapter = () => {
-  //   const data = bible?.BIBLEBOOK.find((b) => b.bnumber == String(userBook) );
-  //   const selectedChapter = data?.CHAPTERS.find((c) => (c.cnumber == String(userChapter) ));
-  //  setChapterData(selectedChapter?.VERS)
-
-  // };
   const handleForward = () => {
-  
-
     scrollToTop();
     if (
       Number(userChapter) <
@@ -140,20 +131,17 @@ const Home = () => {
 
         setUserBook(String(1));
       }
-    
     }
     if (
       !bible?.BIBLEBOOK.find((b) => b.bnumber == String(userBook))?.CHAPTERS
         .length
     ) {
       setUserBook(String(Number(userBook) + 1));
-   
     }
   };
 
   const handleBackward = () => {
     scrollToTop();
-   
 
     if (Number(userChapter) > 1) {
       setUserChapter(String(Number(userChapter) - 1)); // Go to the previous chapter
@@ -167,12 +155,10 @@ const Home = () => {
 
         setUserChapter(String(myBook));
         setUserBook(String(Number(userBook) - 1));
-    
       } else {
         setUserChapter(String(22));
 
         setUserBook(String(66));
-       
       }
     }
     if (
@@ -316,13 +302,13 @@ const Home = () => {
       <ScrollView ref={scrollViewRef}>
         <ParallaxScrollView
           headerBackgroundColor={{
-            light: themeColors.background,
+            light: themeColors.background2,
             dark: themeColors.background,
           }}
           noPadding={true}
           headerImage={
             <>
-              <TabBarIcon size={310} name="book" style={styles.headerImage} />
+              <Image source={require('../assets/images/splash.png')} style={styles.headerImage} />
 
               {bible ? (
                 <ThemedView style={{ ...styles.titleContainer, padding: 10 }}>
@@ -368,11 +354,16 @@ const Home = () => {
                         height: 50,
                         alignItems: "center",
                         justifyContent: "center",
+
                         borderRadius: 9,
                         backgroundColor: themeColors.background2,
                       }}
                     >
-                      <ThemedText>{number}</ThemedText>
+                      <ThemedText
+                        style={{ fontWeight: "bold", color: themeColors.tint }}
+                      >
+                        {number}
+                      </ThemedText>
                     </TouchableOpacity>
                   ))}
               </ThemedView>
@@ -381,9 +372,9 @@ const Home = () => {
             {bible?.BIBLEBOOK.find((b) => b.bnumber == String(userBook))
               ?.CHAPTERS.length
               ? bible?.BIBLEBOOK.find((b) => b.bnumber == String(userBook))
-                  ?.CHAPTERS.find((c) => c.cnumber == String(userChapter))
-                  ?.VERS.map((item) => (
-                    <ThemedView
+                  ?.CHAPTERS.find((c:any) => c.cnumber == String(userChapter))
+                  ?.VERS.map((item: any) => (
+                    <TouchableOpacity
                       style={{ flexDirection: "row" }}
                       key={item.vnumber}
                     >
@@ -394,22 +385,24 @@ const Home = () => {
 
                           letterSpacing: 0.5,
                           opacity: 0.7,
+
+                          fontSize: 18,
                         }}
                       >
                         <ThemedText
-                          style={{ color: themeColors.tabIconDefault }}
+                          style={{ color: themeColors.tabIconDefault, fontWeight:'bold' }}
                         >
                           {item.vnumber}.{" "}
                         </ThemedText>
                         {item.text}
                       </ThemedText>
-                    </ThemedView>
+                    </TouchableOpacity>
                   ))
               : bible?.BIBLEBOOK.find((b) => b.bnumber == String(userBook))
                   ?.CHAPTERS.cnumber == "1"
               ? bible?.BIBLEBOOK.find(
                   (b) => b.bnumber == String(userBook)
-                )?.CHAPTERS.VERS.map((item) => (
+                )?.CHAPTERS.VERS.map((item:any) => (
                   <ThemedView
                     style={{ flexDirection: "row" }}
                     key={item.vnumber}
@@ -505,12 +498,11 @@ const Home = () => {
                   borderBottomWidth: 1,
                   borderBottomColor: themeColors.background2,
                 }}
-                onPress={ () => {
+                onPress={() => {
                   handleSelectionModalExpansion();
                   setUserBook(books.bnumber);
-               
+
                   setUserChapter("1");
-         
 
                   scrollToTop();
                   handleChapterSelection(
@@ -542,8 +534,9 @@ const Home = () => {
 const styles = StyleSheet.create({
   headerImage: {
     color: "#808080",
-    bottom: -90,
-    left: -35,
+    bottom: -70,
+    right: -70,
+    width: 310,
     position: "absolute",
   },
   titleContainer: {
