@@ -13,13 +13,13 @@ const TodayVerse = () => {
     <ParallaxScrollView
       headerBackgroundColor={{
         light: themeColors.background2,
-        dark: themeColors.background,
+        dark: themeColors.background+"00",
       }}
       noPadding={true}
       headerImage={
         <>
           <Image
-            source={require("../assets/images/splash.png")}
+            source={require("../assets/images/favicon.png")}
             style={styles.headerImage}
           />
            <ThemedView style={{ ...styles.titleContainer, padding: 10 }}>
@@ -35,7 +35,7 @@ const TodayVerse = () => {
 
 const styles = StyleSheet.create({
   headerImage: {
-    color: "#808080",
+    
     bottom: -70,
     right: -70,
     width: 310,

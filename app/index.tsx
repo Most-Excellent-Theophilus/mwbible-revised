@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import {
+  Button,
   Dimensions,
   Image,
   PanResponder,
@@ -20,6 +21,7 @@ import Animated, { useSharedValue, withTiming } from "react-native-reanimated";
 import SlideInView from "@/components/SlideInView";
 
 import { useGlobalContext } from "@/context/GlobalContext";
+import CustomToast from "@/components/preference/CustomToast";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 type BibleType = {
@@ -28,23 +30,28 @@ type BibleType = {
     {
       bnumber: string;
       bname: string;
-      CHAPTERS: [
-        {
-          cnumber: string;
-          VERS: [
+      CHAPTERS:
+        | [
             {
-              vnumber: string;
-              text: string;
+              cnumber: string;
+              VERS: [
+                {
+                  vnumber: string;
+                  text: string;
+                }
+              ];
             }
-          ];
-        }
-      ] | any | null | undefined,
+          ]
+        | any
+        | null
+        | undefined;
     }
   ];
 };
 const Home = () => {
   const { language, setLanguage } = useGlobalContext();
   const colorScheme = useColorScheme();
+  const [message, setMessage] = useState("");
 
   const [expandSelectionModal, setExpandSelectionModal] = useState(false);
   const [bible, getBible] = useState<BibleType | undefined>(undefined);
@@ -55,6 +62,16 @@ const Home = () => {
 
   const [chaptersContent, setChaptersContent] = useState<any | {} | []>([]);
   const scrollViewRef = useRef<ScrollView>(null);
+  const [switching, setSwitching] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+
+  const showToast = () => {
+    setToastVisible(true);
+  };
+
+  const hideToast = () => {
+    setToastVisible(false);
+  };
 
   const scrollToTop = () => {
     scrollViewRef.current!.scrollTo({ y: 0, animated: true }); // Use non-null assertion
@@ -72,6 +89,7 @@ const Home = () => {
 
   const storeData = async () => {
     try {
+      setSwitching(true);
       switch (language) {
         case "Ch":
           await import("../assets/Books/Chichewa.json").then((bibleData) =>
@@ -101,6 +119,10 @@ const Home = () => {
       }
     } catch (error) {
       alert("some thing went wrong");
+    } finally {
+      setSwitching(false);
+      setMessage(`${language=="Ch"? " Chichewa ": language=="En"?" English ":" Sena "}Bible Loaded`);
+      showToast();
     }
   };
 
@@ -214,12 +236,23 @@ const Home = () => {
     },
   });
 
-  const handleChapterSelection = (numberOfBooks: string | number) => {
-    if (numberOfBooks != "1") {
+  const handleChapterSelection = async ({
+    numberOfChapters,
+    bookNumber,
+  }: {
+    numberOfChapters: string | number;
+    bookNumber: string;
+  }) => {
+    if (numberOfChapters != "1") {
       setIsChapterSelection(true);
-      const chapterArray = createArray(numberOfBooks);
+      const chapterArray = createArray(numberOfChapters);
       setChaptersContent(chapterArray);
     }
+    handleSelectionModalExpansion();
+
+    scrollToTop();
+    setUserBook(bookNumber);
+    setUserChapter("1");
   };
 
   function createArray(size: any) {
@@ -308,7 +341,24 @@ const Home = () => {
           noPadding={true}
           headerImage={
             <>
-              <Image source={require('../assets/images/splash.png')} style={styles.headerImage} />
+              <Image
+                source={require("../assets/images/favicon.png")}
+                style={styles.headerImage}
+              />
+
+              {switching && (
+                <Animated.View style={{ position: "absolute" }}>
+                  <ThemedView
+                    style={{ padding: 5, borderRadius: 10, margin: 10 }}
+                  >
+                    <ThemedText style={{ paddingBottom: 5 }}>
+                      Loading bible...
+                    </ThemedText>
+
+                    <SkeletonBox height={4} width={120} />
+                  </ThemedView>
+                </Animated.View>
+              )}
 
               {bible ? (
                 <ThemedView style={{ ...styles.titleContainer, padding: 10 }}>
@@ -372,7 +422,7 @@ const Home = () => {
             {bible?.BIBLEBOOK.find((b) => b.bnumber == String(userBook))
               ?.CHAPTERS.length
               ? bible?.BIBLEBOOK.find((b) => b.bnumber == String(userBook))
-                  ?.CHAPTERS.find((c:any) => c.cnumber == String(userChapter))
+                  ?.CHAPTERS.find((c: any) => c.cnumber == String(userChapter))
                   ?.VERS.map((item: any) => (
                     <TouchableOpacity
                       style={{ flexDirection: "row" }}
@@ -390,7 +440,10 @@ const Home = () => {
                         }}
                       >
                         <ThemedText
-                          style={{ color: themeColors.tabIconDefault, fontWeight:'bold' }}
+                          style={{
+                            color: themeColors.tabIconDefault,
+                            fontWeight: "bold",
+                          }}
                         >
                           {item.vnumber}.{" "}
                         </ThemedText>
@@ -402,7 +455,7 @@ const Home = () => {
                   ?.CHAPTERS.cnumber == "1"
               ? bible?.BIBLEBOOK.find(
                   (b) => b.bnumber == String(userBook)
-                )?.CHAPTERS.VERS.map((item:any) => (
+                )?.CHAPTERS.VERS.map((item: any) => (
                   <ThemedView
                     style={{ flexDirection: "row" }}
                     key={item.vnumber}
@@ -498,18 +551,16 @@ const Home = () => {
                   borderBottomWidth: 1,
                   borderBottomColor: themeColors.background2,
                 }}
-                onPress={() => {
-                  handleSelectionModalExpansion();
-                  setUserBook(books.bnumber);
+                onPress={ async () => {
+                  setMessage(`Book: ${books.bname}`);
+                  showToast();
 
-                  setUserChapter("1");
-
-                  scrollToTop();
-                  handleChapterSelection(
-                    books.CHAPTERS.length ? books.CHAPTERS.length : "1"
-                  );
-
-                  // setIsChapterSelection(true)
+                await  handleChapterSelection({
+                    numberOfChapters: books.CHAPTERS.length
+                      ? books.CHAPTERS.length
+                      : "1",
+                    bookNumber: books.bnumber,
+                  });
                 }}
               >
                 <ThemedText
@@ -527,13 +578,18 @@ const Home = () => {
           </ThemedView>
         </ParallaxScrollView>
       </SlideInView>
+      {/* <Button title="Show Toast" onPress={showToast} /> */}
+      <CustomToast
+        message={message}
+        visible={toastVisible}
+        onClose={hideToast}
+      />
     </>
   );
 };
 
 const styles = StyleSheet.create({
   headerImage: {
-    color: "#808080",
     bottom: -70,
     right: -70,
     width: 310,

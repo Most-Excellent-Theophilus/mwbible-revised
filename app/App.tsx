@@ -16,7 +16,6 @@ import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 import { ThemedText } from "@/components/ThemedText";
 import { StyleSheet, Pressable, TouchableOpacity, Image } from "react-native";
 import { Link } from "expo-router";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { ThemedView } from "@/components/ThemedView";
 import { useGlobalContext } from "@/context/GlobalContext";
 
@@ -97,7 +96,7 @@ export default function RootLayout() {
               headerImage={
                 <>
                   <Image
-                    source={require("../assets/images/splash.png")}
+                    source={require("../assets/images/favicon.png")}
                     style={styles.headerImage}
                   />
 
@@ -463,9 +462,10 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   headerImage: {
-    color: "#808080",
-    bottom: -90,
-    left: -35,
+    
+    bottom: -70,
+    right: -70,
+    width: 310,
     position: "absolute",
   },
   titleContainer: {

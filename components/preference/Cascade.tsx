@@ -1,43 +1,33 @@
-// import { Linking, Alert,Share  } from 'react-native';
-//   import Share as  from 'react-native-share';
+import {Alert  } from 'react-native';
+//   import Share   from 'react-native-share';
+import * as Linking from 'expo-linking';
 
-// export const openWhatsApp = (phone: string, text: string) => {
-//   // Format phone number and message
-//   const url = `whatsapp://send?text=${encodeURIComponent(text)}&phone=${phone}`;
+ export const openWhatsApp = ({phoneNumber, message}:{phoneNumber :string, message: string}) => {
+    const url = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
+    Linking.openURL(url).catch(() => {
+        Alert.alert("Error", "WhatsApp is not installed on this device.");
+    });
+};
 
-//   // Check if WhatsApp is available on the device
-//   Linking.canOpenURL(url)
-//     .then((supported) => {
-//       if (supported) {
-//         Linking.openURL(url);
-//       } else {
-//         Alert.alert("WhatsApp is not installed on this device.");
-//       }
-//     })
-//     .catch((err) => console.error("An error occurred", err));
-// };
+ export const openWebsite = ({url}:{url : string}) => {
+    Linking.openURL(url).catch(() => {
+        Alert.alert("Error", "Unable to open the website.");
+    });
+};
 
-// export const onShare = async () => {
-//     try {
-//       const result = await Share.share({
-//         message: 'Check out this amazing app! https://example.com',
-//       });
-  
-//       if (result.action === Share.sharedAction) {
-//         if (result.activityType) {
-//           // Shared with specific activity type
-//         } else {
-//           // Shared successfully
-//         }
-//       } else if (result.action === Share.dismissedAction) {
-//         // Dismissed
-//       }
-//     } catch (error: any) {
-//       console.error("Error sharing:", error.message);
-//     }
-//   };
-  
+export const sendEmail = ({email, subject, body}:{email : string, subject: string, body : string}) => {
+    const url = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    Linking.openURL(url).catch(() => {
+        Alert.alert("Error", "Unable to open email app.");
+    });
+};
 
+export const makeCall = ({phoneNumber}:{phoneNumber :string}) => {
+    const url = `tel:${phoneNumber}`;
+    Linking.openURL(url).catch(() => {
+        Alert.alert("Error", "Unable to make a call.");
+    });
+};
 
 // const onAdvancedShare = () => {
 //   const shareOptions = {
