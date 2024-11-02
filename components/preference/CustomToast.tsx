@@ -46,9 +46,9 @@ const CustomToast: React.FC<CustomToastProps> = ({ message, visible, onClose, du
     if (!visible) return null;
 
     return (
-        <Animated.View style={[styles.toastContainer, { opacity: fadeAnim , backgroundColor:themeColors.text}]}>
+        <Animated.View style={[styles.toastContainer, { opacity: fadeAnim , backgroundColor:themeColors.tint}]}>
             <TouchableOpacity onPress={hideToast} activeOpacity={0.9}>
-                <Text style={{...styles.toastText, color:themeColors.background}}>{message}</Text>
+                <Text style={{...styles.toastText, color:themeColors.background2}}>{message}</Text>
             </TouchableOpacity>
         </Animated.View>
     );
